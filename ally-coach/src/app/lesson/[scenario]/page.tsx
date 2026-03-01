@@ -75,7 +75,7 @@ export default async function LessonPage({ params }: { params: Promise<{ scenari
             </div>
 
             <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/40 p-6">
-              <h2 className="text-xl font-semibold">💡 Pro Tips</h2>
+              <h2 className="text-xl font-semibold"> Pro Tips</h2>
               <ul className="mt-4 space-y-3 text-slate-300">
                 {content.tips.map((tip, i) => (
                   <li key={i} className="flex gap-3">
