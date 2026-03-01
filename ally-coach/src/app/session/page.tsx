@@ -196,15 +196,29 @@ function SessionContent() {
         })
       });
   
+      if (!res.ok) {
+        if (res.status === 429) {
+          console.warn("Too many requests to API. Please wait a moment.");
+          setConversation(prev => [
+            ...conversationHistory,
+            { role: "ai", text: "⚠️ AI Coach is temporarily unavailable. Please wait a moment and try again." }
+          ]);
+          return;
+        }
+        throw new Error(`API error: ${res.status}`);
+      }
+  
       const data = await res.json();
       if (!data.feedback) {
-        console.error("No feedback returned from API");
+        console.warn("No feedback returned from API");
+        setConversation(prev => [
+          ...conversationHistory,
+          { role: "ai", text: "⚠️ AI Coach did not respond. Please try again." }
+        ]);
         return;
       }
   
       const feedback = data.feedback;
-  
-      // Append AI response safely
       setConversation(prev => [...conversationHistory, { role: "ai", text: feedback }]);
       await speakText(feedback);
   
@@ -214,8 +228,13 @@ function SessionContent() {
       }
     } catch (error) {
       console.error("Feedback error:", error);
+      setConversation(prev => [
+        ...conversationHistory,
+        { role: "ai", text: "⚠️ AI Coach failed to respond due to an error." }
+      ]);
     }
   }
+
   // End scene and move to next situation
   async function endScene() {
     try {
