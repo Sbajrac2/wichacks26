@@ -225,14 +225,14 @@ export default function OpenChatPage() {
                   disabled={isAISpeaking}
                   className="rounded-full bg-red-500 p-8 hover:bg-red-400 disabled:opacity-50"
                 >
-                  🎤 Start Speaking
+                   Start Speaking
                 </button>
               ) : (
                 <button
                   onClick={stopRecording}
                   className="rounded-full bg-green-500 p-8 hover:bg-green-400 animate-pulse"
                 >
-                  ✓ Done Speaking
+                   Done Speaking
                 </button>
               )}
             </div>
