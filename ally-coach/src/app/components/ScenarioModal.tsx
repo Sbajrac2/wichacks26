@@ -17,14 +17,14 @@ export default function ScenarioModal({ scenario, onClose }: Props) {
             href={`/lesson/${scenario}`}
             className="rounded-xl bg-indigo-500 px-4 py-3 text-center font-semibold hover:bg-indigo-400"
           >
-            📚 Take Lesson
+             Take Lesson
           </a>
 
           <a
             href={`/session?scenario=${scenario}`}
             className="rounded-xl border border-slate-700 px-4 py-3 text-center hover:border-slate-500"
           >
-            🎤 Live Roleplay
+             Live Conversation
           </a>
         </div>
 
