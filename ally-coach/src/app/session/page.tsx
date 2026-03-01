@@ -103,9 +103,7 @@ export default function SessionPage() {
       
       recognition.onend = () => {
         console.log("🔴 Recognition ended");
-        if (isRecording) {
-          setIsRecording(false);
-        }
+        // Don't auto-stop when recognition ends naturally
       };
       
       recognition.start();
@@ -118,14 +116,25 @@ export default function SessionPage() {
   }
 
   function stopRecording() {
+    console.log("🛑 Stopping recording...");
+    console.log("📝 Current transcript:", transcript);
+    
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        console.log("Recognition already stopped");
+      }
       setIsRecording(false);
       
-      if (transcript) {
+      if (transcript && transcript.trim()) {
+        console.log("✅ Sending transcript to AI:", transcript);
         setConversation(prev => [...prev, { role: "user", text: transcript }]);
         getAIFeedback(transcript);
         setTranscript("");
+      } else {
+        console.log("⚠️ No transcript to send");
+        alert("No speech detected. Please try again and speak clearly.");
       }
     }
   }
