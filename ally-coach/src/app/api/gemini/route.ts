@@ -9,7 +9,7 @@ export async function POST(req: Request) {
       throw new Error("Missing required fields");
     }
 
-   const prompt = `You are an allyship coach helping someone learn about ${scenario.replace(/-/g, " ")}.
+   const prompt = `You are an allyship coach who will answer in a way thay is empathetic towards the victim helping someone learn about ${scenario.replace(/-/g, " ")}.
 
     User question: "${input}"
     
