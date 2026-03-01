@@ -154,15 +154,16 @@ function SessionContent() {
   // Stop recording and send input to AI
   function stopRecording() {
     if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {}
+      try { recognitionRef.current.stop(); } catch {}
       setIsRecording(false);
-
+  
       if (transcript && transcript.trim()) {
-        const newConversation = [...conversation, { role: "user", text: transcript }];
-        setConversation(newConversation);
-        getAIFeedback(transcript, newConversation);
+        // Use functional update to guarantee fresh state
+        setConversation(prev => {
+          const updated = [...prev, { role: "user", text: transcript }];
+          getAIFeedback(transcript, updated); // pass the latest
+          return updated;
+        });
         setTranscript("");
         finalTranscriptRef.current = "";
       } else {
@@ -170,18 +171,18 @@ function SessionContent() {
       }
     }
   }
-
-  // Handle typed input
+  
   function submitTypedInput() {
     if (typedInput.trim()) {
-      const newConversation = [...conversation, { role: "user", text: typedInput }];
-      setConversation(newConversation);
-      getAIFeedback(typedInput, newConversation);
+      setConversation(prev => {
+        const updated = [...prev, { role: "user", text: typedInput }];
+        getAIFeedback(typedInput, updated);
+        return updated;
+      });
       setTypedInput("");
     }
   }
-
-  // Fetch AI feedback
+  
   async function getAIFeedback(userResponse: string, conversationHistory: any) {
     try {
       const res = await fetch("/api/feedback", {
@@ -194,14 +195,19 @@ function SessionContent() {
           situationIndex
         })
       });
-
+  
       const data = await res.json();
+      if (!data.feedback) {
+        console.error("No feedback returned from API");
+        return;
+      }
+  
       const feedback = data.feedback;
-
-      const updatedConversation = [...conversationHistory, { role: "ai", text: feedback }];
-      setConversation(updatedConversation);
+  
+      // Append AI response safely
+      setConversation(prev => [...conversationHistory, { role: "ai", text: feedback }]);
       await speakText(feedback);
-
+  
       if (data.situationComplete) {
         markSituationComplete(scenario);
         setTimeout(() => router.push('/badges'), 2000);
@@ -210,7 +216,6 @@ function SessionContent() {
       console.error("Feedback error:", error);
     }
   }
-
   // End scene and move to next situation
   async function endScene() {
     try {
