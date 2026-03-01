@@ -22,42 +22,45 @@ function SessionContent() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const finalTranscriptRef = useRef("");
 
-  useEffect(() => {
-    setSituationIndex(getNextSituationIndex(scenario));
-  }, [scenario]);
-
+  // Define all scenario prompts
   const scenarioPrompts: Record<string, string[]> = {
-  "gender-bias": [
-    "You're in a team meeting. A female colleague just shared an idea, but a male coworker interrupts and takes credit for it. What do you say?",
-    "A female student was overlooked for a scholarship in favor of a male student with similar achievements. How do you respond?",
-    "During a presentation, a male colleague repeatedly talks over a female colleague. How do you address it?",
-    "You notice female teammates being left out of important emails and meetings. What action do you take?",
-    "A manager praises a male colleague for work your female colleague did. How do you respond?"
-  ],
-  "racial-microaggressions": [
-    "During lunch, a coworker makes a 'joke' about someone's ethnicity. Everyone laughs uncomfortably. How do you respond?",
-    "A teammate keeps using stereotypes to describe colleagues of a certain race. What do you do?",
-    "Someone on your team mispronounces a colleague's ethnic name repeatedly. How do you react?",
-    "During a meeting, a person assumes a colleague of color is an intern. How do you address it?",
-    "A coworker comments that a certain ethnic group 'naturally' has certain skills. What do you say?"
-  ],
-  "misgendering": [
-    "In a meeting, someone repeatedly uses the wrong pronouns for your colleague. What do you do?",
-    "A new coworker insists on using an outdated name for someone who recently transitioned. How do you respond?",
-    "Someone makes a joke about someone's gender identity. How do you address it?",
-    "During an introduction, a colleague is misgendered publicly. How do you handle it?",
-    "Your manager consistently misgenders a team member in emails. What action do you take?"
-  ]
-};
+    "gender-bias": [
+      "You're in a team meeting. A female colleague just shared an idea, but a male coworker interrupts and takes credit for it. What do you say?",
+      "A female student was overlooked for a scholarship in favor of a male student with similar achievements. How do you respond?",
+      "During a presentation, a male colleague repeatedly talks over a female colleague. How do you address it?",
+      "You notice female teammates being left out of important emails and meetings. What action do you take?",
+      "A manager praises a male colleague for work your female colleague did. How do you respond?"
+    ],
+    "racial-microaggressions": [
+      "During lunch, a coworker makes a 'joke' about someone's ethnicity. Everyone laughs uncomfortably. How do you respond?",
+      "A teammate keeps using stereotypes to describe colleagues of a certain race. What do you do?",
+      "Someone on your team mispronounces a colleague's ethnic name repeatedly. How do you react?",
+      "During a meeting, a person assumes a colleague of color is an intern. How do you address it?",
+      "A coworker comments that a certain ethnic group 'naturally' has certain skills. What do you say?"
+    ],
+    "misgendering": [
+      "In a meeting, someone repeatedly uses the wrong pronouns for your colleague. What do you do?",
+      "A new coworker insists on using an outdated name for someone who recently transitioned. How do you respond?",
+      "Someone makes a joke about someone's gender identity. How do you address it?",
+      "During an introduction, a colleague is misgendered publicly. How do you handle it?",
+      "Your manager consistently misgenders a team member in emails. What action do you take?"
+    ]
+  };
 
+  // Start session
   async function startSession() {
-  setSessionStarted(true);
-  const prompt = scenarioPrompts[scenario][situationIndex];
-  setConversation([{ role: "ai", text: prompt }]);
-  await speakText(prompt);
-}
+    const idx = getNextSituationIndex(scenario); // get correct initial index
+    setSituationIndex(idx);
+    setSessionStarted(true);
 
+    const prompt = scenarioPrompts[scenario][idx];
+    const initialConversation = [{ role: "ai", text: prompt }];
+    setConversation(initialConversation);
 
+    await speakText(prompt);
+  }
+
+  // Function to speak text using ElevenLabs API
   async function speakText(text: string) {
     setIsAISpeaking(true);
     try {
@@ -73,12 +76,18 @@ function SessionContent() {
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
-      
+
       audio.onended = () => {
         setIsAISpeaking(false);
         audioRef.current = null;
       };
-      await audio.play();
+
+      try {
+        await audio.play();
+      } catch (err) {
+        console.warn("Autoplay prevented:", err);
+        setIsAISpeaking(false);
+      }
     } catch (error) {
       console.error("Speech error:", error);
       setIsAISpeaking(false);
@@ -98,26 +107,24 @@ function SessionContent() {
     finalTranscriptRef.current = "";
   }
 
+  // Start voice recording
   async function startRecording() {
     try {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      
       if (!SpeechRecognition) {
         alert("Speech recognition not supported. Use Chrome.");
         return;
       }
-      
+
       const recognition = new SpeechRecognition();
       recognitionRef.current = recognition;
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = 'en-US';
-      
       finalTranscriptRef.current = "";
-      
+
       recognition.onresult = (event: any) => {
         let interimTranscript = '';
-        
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcriptPiece = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
@@ -126,23 +133,16 @@ function SessionContent() {
             interimTranscript += transcriptPiece;
           }
         }
-        
         setTranscript(finalTranscriptRef.current + interimTranscript);
       };
-      
+
       recognition.onerror = (event: any) => {
-        if (event.error === 'not-allowed') {
-          alert("Microphone permission denied.");
-        } else if (event.error === 'audio-capture') {
-          alert("No microphone found.");
-        }
+        if (event.error === 'not-allowed') alert("Microphone permission denied.");
+        else if (event.error === 'audio-capture') alert("No microphone found.");
         setIsRecording(false);
       };
-      
-      recognition.onend = () => {
-        // Don't auto-restart
-      };
-      
+
+      recognition.onend = () => { /* do nothing */ };
       recognition.start();
       setIsRecording(true);
     } catch (error) {
@@ -151,18 +151,18 @@ function SessionContent() {
     }
   }
 
+  // Stop recording and send input to AI
   function stopRecording() {
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
-      } catch (e) {
-        console.log("Recognition already stopped");
-      }
+      } catch {}
       setIsRecording(false);
-      
+
       if (transcript && transcript.trim()) {
-        setConversation(prev => [...prev, { role: "user", text: transcript }]);
-        getAIFeedback(transcript);
+        const newConversation = [...conversation, { role: "user", text: transcript }];
+        setConversation(newConversation);
+        getAIFeedback(transcript, newConversation);
         setTranscript("");
         finalTranscriptRef.current = "";
       } else {
@@ -171,15 +171,18 @@ function SessionContent() {
     }
   }
 
+  // Handle typed input
   function submitTypedInput() {
     if (typedInput.trim()) {
-      setConversation(prev => [...prev, { role: "user", text: typedInput }]);
-      getAIFeedback(typedInput);
+      const newConversation = [...conversation, { role: "user", text: typedInput }];
+      setConversation(newConversation);
+      getAIFeedback(typedInput, newConversation);
       setTypedInput("");
     }
   }
 
-  async function getAIFeedback(userResponse: string) {
+  // Fetch AI feedback
+  async function getAIFeedback(userResponse: string, conversationHistory: any) {
     try {
       const res = await fetch("/api/feedback", {
         method: "POST",
@@ -187,17 +190,18 @@ function SessionContent() {
         body: JSON.stringify({ 
           scenario, 
           userResponse,
-          conversationHistory: conversation,
+          conversationHistory,
           situationIndex
         })
       });
 
       const data = await res.json();
       const feedback = data.feedback;
-      
-      setConversation(prev => [...prev, { role: "ai", text: feedback }]);
+
+      const updatedConversation = [...conversationHistory, { role: "ai", text: feedback }];
+      setConversation(updatedConversation);
       await speakText(feedback);
-      
+
       if (data.situationComplete) {
         markSituationComplete(scenario);
         setTimeout(() => router.push('/badges'), 2000);
@@ -207,22 +211,21 @@ function SessionContent() {
     }
   }
 
-  // Called by the user to end the current situation and advance to the next one.
-   async function endScene() {
+  // End scene and move to next situation
+  async function endScene() {
     try {
       markSituationComplete(scenario);
-      
+
       const nextIdx = situationIndex + 1;
-      
+
       if (nextIdx < scenarioPrompts[scenario].length) {
         setSituationIndex(nextIdx);
-  
         const nextPrompt = scenarioPrompts[scenario][nextIdx];
         const aiText = `Next situation ${nextIdx + 1}: ${nextPrompt}`;
         setConversation([{ role: "ai", text: aiText }]);
         await speakText(aiText);
       } else {
-        // Completed all 5 scenes for this scenario
+        // Completed all 5 scenes
         const prog = getScenarioProgress(scenario);
         if (prog && prog.completed) {
           setTimeout(() => router.push('/badges'), 1500);
@@ -233,7 +236,7 @@ function SessionContent() {
     }
   }
 
-
+  // UI rendering
   return (
     <main className="min-h-screen bg-slate-950 text-white px-8 py-12">
       <div className="max-w-4xl mx-auto">
@@ -282,6 +285,7 @@ function SessionContent() {
                   End Scene →
                 </button>
               </div>
+
               <div className="flex gap-2 mb-2">
                 <button
                   onClick={() => setInputMode("voice")}
@@ -305,7 +309,7 @@ function SessionContent() {
                   Skip →
                 </button>
               )}
-              
+
               {inputMode === "voice" ? (
                 <>
                   {transcript && (
@@ -321,7 +325,7 @@ function SessionContent() {
                       </button>
                     </div>
                   )}
-                  
+
                   {!isRecording ? (
                     <button
                       onClick={startRecording}
