@@ -63,7 +63,7 @@ export default function Home() {
               For when you wanted to say something but couldn't.
             </h1>
             <p className="mt-5 text-lg text-slate-300">
-              Practice speaking up before the moment happens. Voice-first roleplay training to help you stand up for someone you care about—so next time, you'll be ready.
+              Practice speaking up before the moment happens. Voice-first roleplay training to help you stand up for someone you care about, so next time, you'll be ready.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
