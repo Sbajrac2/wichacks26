@@ -1,27 +1,37 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import ScenarioCard from "./components/ScenarioCard";
+import StreakButton from "./components/StreakButton";
+import { getCompletedCount } from "./lib/progress";
+import { markStreakOncePerDay } from "./components/StreakButton";
 
 export default function Home() {
+  const [badgeCount, setBadgeCount] = useState(0);
+
+  useEffect(() => {
+    setBadgeCount(getCompletedCount());
+    markStreakOncePerDay();
+  }, []);
+
   const scenarios = [
     {
       id: "gender-bias",
       title: "Gender Bias",
-      brief: "A colleague gets subtly undermined in a meeting.",
+      brief: "Practice 5 situations: credit stealing, being talked over, expertise dismissed, exclusion from networking, and more.",
       goal: "Back them up without escalating the room.",
-      difficulty: "Medium",
     },
     {
       id: "racial-microaggressions",
       title: "Racial Microaggressions",
-      brief: "A “joke” crosses a line in a group setting.",
+      brief: "Practice 5 situations: ethnic jokes, 'where are you from' questions, hair touching, stereotyping, and more.",
       goal: "Address it professionally, keep dignity centered.",
-      difficulty: "Hard",
     },
     {
       id: "misgendering",
       title: "Misgendering",
-      brief: "Someone uses the wrong pronouns and moves on.",
+      brief: "Practice 4 situations: wrong pronouns, dismissing corrections, pronoun jokes, deadnaming, and more.",
       goal: "Correct politely and support the impacted person.",
-      difficulty: "Easy",
     },
   ] as const;
 
@@ -29,14 +39,20 @@ export default function Home() {
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto max-w-6xl px-6 py-14">
         <header className="flex items-center justify-between">
-          <div className="text-lg font-semibold tracking-tight">Ally Coach</div>
-          <nav className="text-sm text-slate-300">
+          <div className="text-lg font-semibold tracking-tight">AllyCo</div>
+          <nav className="flex items-center gap-6 text-sm text-slate-300">
+            <StreakButton />
             <a className="hover:text-white" href="#how">
               How it works
             </a>
-            <span className="mx-3 text-slate-700">|</span>
+            <span className="text-slate-700">|</span>
             <a className="hover:text-white" href="#scenarios">
               Scenarios
+            </a>
+            <span className="text-slate-700">|</span>
+            <a className="hover:text-white flex items-center gap-2" href="/badges">
+              <span>🏆</span>
+              <span>Badges ({badgeCount}/3)</span>
             </a>
           </nav>
         </header>
@@ -44,26 +60,16 @@ export default function Home() {
         <section className="mt-14 grid gap-10 lg:grid-cols-2 lg:items-center">
           <div>
             <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
-              Practice hard conversations before they happen.
+              For when you wanted to say something but couldn't.
             </h1>
             <p className="mt-5 text-lg text-slate-300">
-              Voice-first roleplay training for real workplace moments. Pick a
-              scenario, respond out loud, and get coaching with a score for{" "}
-              <span className="text-slate-100">Courage</span>,{" "}
-              <span className="text-slate-100">Empathy</span>, and{" "}
-              <span className="text-slate-100">Professionalism</span>.
+              Practice speaking up before the moment happens. Voice-first roleplay training to help you stand up for someone you care about—so next time, you'll be ready.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
               <a
-                href="/session?scenario=racial-microaggressions"
-                className="rounded-xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-400"
-              >
-                Start demo
-              </a>
-              <a
                 href="#scenarios"
-                className="rounded-xl border border-slate-700 px-5 py-3 text-sm font-semibold text-slate-100 hover:border-slate-500"
+                className="rounded-xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-400"
               >
                 Pick a scenario
               </a>
@@ -85,12 +91,12 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 shadow-sm">
+          <a href="/open-chat" className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 shadow-sm hover:border-slate-600 cursor-pointer block">
             <div className="flex items-center justify-between">
               <div className="text-sm font-semibold text-slate-100">
-                Live session preview
+                Open Voice Chat
               </div>
-              <div className="text-xs text-slate-400">Voice visualization</div>
+              <div className="text-xs text-slate-400">Talk about your experience</div>
             </div>
 
             <div className="mt-6 flex items-center justify-center">
@@ -101,25 +107,18 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-                <div className="text-xs text-slate-400">Courage</div>
-                <div className="mt-1 text-lg font-semibold">84</div>
-              </div>
-              <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-                <div className="text-xs text-slate-400">Empathy</div>
-                <div className="mt-1 text-lg font-semibold">92</div>
-              </div>
-              <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-                <div className="text-xs text-slate-400">Professionalism</div>
-                <div className="mt-1 text-lg font-semibold">88</div>
-              </div>
+            <div className="mt-6 flex items-center justify-center gap-6 text-xs text-slate-400">
+              <span>Elevate</span>
+              <span>•</span>
+              <span>Ensemble</span>
+              <span>•</span>
+              <span>Empower</span>
             </div>
 
             <div className="mt-6 text-xs text-slate-400">
-              End a session to get two wins and one “power move” for next time.
+              Share your real experience and get personalized guidance.
             </div>
-          </div>
+          </a>
         </section>
 
         <section id="scenarios" className="mt-16">
@@ -153,23 +152,23 @@ export default function Home() {
             <div>
               <div className="text-sm font-semibold">3) Get coached</div>
               <div className="mt-2 text-sm text-slate-300">
-                Score + two wins + one power move to try next time.
+                Feedback focused on Elevate, Ensemble, and Empower.
               </div>
             </div>
           </div>
 
           <div className="mt-8">
             <a
-              href="/session?scenario=racial-microaggressions"
+              href="#scenarios"
               className="inline-flex rounded-xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-400"
             >
-              Start demo
+              Go to scenarios
             </a>
           </div>
         </section>
 
         <footer className="mt-14 text-xs text-slate-500">
-          Built for hackathons and humans who want to respond better under pressure.
+          Don't let the right words escape you. This app helps you prepare, speak up, and support those who need it.
         </footer>
       </div>
     </main>

@@ -8,7 +8,6 @@ interface Scenario {
   title: string;
   brief: string;
   goal: string;
-  difficulty: string;
 }
 
 export default function ScenarioCard({ scenario }: { scenario: Scenario }) {
@@ -20,12 +19,7 @@ export default function ScenarioCard({ scenario }: { scenario: Scenario }) {
         onClick={() => setShowModal(true)}
         className="group rounded-2xl border border-slate-800 bg-slate-900/30 p-5 hover:border-slate-600 text-left w-full"
       >
-        <div className="flex items-center justify-between">
-          <div className="text-base font-semibold">{scenario.title}</div>
-          <span className="rounded-full border border-slate-800 px-2 py-0.5 text-xs text-slate-300">
-            {scenario.difficulty}
-          </span>
-        </div>
+        <div className="text-base font-semibold">{scenario.title}</div>
         <div className="mt-3 text-sm text-slate-300">{scenario.brief}</div>
         <div className="mt-4 rounded-xl bg-slate-950/50 p-3">
           <div className="text-xs text-slate-400">Mission goal</div>

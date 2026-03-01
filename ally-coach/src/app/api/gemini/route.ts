@@ -1,20 +1,19 @@
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  console.log("🔥 Gemini API hit at:", new Date().toISOString());
   try {
     const { input, scenario } = await req.json();
-    console.log("📥 Request:", { input, scenario });
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey || !input || !scenario) {
       throw new Error("Missing required fields");
     }
 
-    const prompt = `You are an allyship lesson coach helping someone learn about workplace scenarios.
-The lesson topic is: ${scenario.replace(/-/g, " ")}.
-Answer the user's question clearly, educationally, and concisely. Focus on practical advice.
-Question: ${input}`;
+    const prompt = `You are an empathetic allyship coach helping someone learn about ${scenario.replace(/-/g, " ")}.
+
+User question: "${input}"
+
+Provide a clear, practical answer. Use **bold** for key points and line breaks for readability. Keep it warm and actionable.`;
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -28,17 +27,12 @@ Question: ${input}`;
     );
 
     const data = await response.json();
-    console.log("📤 Gemini response:", JSON.stringify(data, null, 2));
     
     if (data.error) {
-      console.error("Gemini API error:", data.error);
-      return NextResponse.json(
-        { reply: "API quota exceeded. Please try again later or use a different API key." },
-        { status: 429 }
-      );
+      throw new Error(data.error.message);
     }
     
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble right now. Please try again.";
 
     return NextResponse.json({ reply });
   } catch (error: any) {
@@ -49,4 +43,3 @@ Question: ${input}`;
     );
   }
 }
-console.log("API KEY BEING USED:", process.env.GEMINI_API_KEY);
