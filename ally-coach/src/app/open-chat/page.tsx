@@ -34,7 +34,11 @@ export default function OpenChatPage() {
         body: JSON.stringify({ text })
       });
 
-      if (!res.ok) throw new Error("Speech failed");
+      if (!res.ok) {
+        const errText = await res.text().catch(() => null);
+        console.error("TTS endpoint returned non-OK:", res.status, errText);
+        throw new Error(`Speech failed: ${res.status} ${errText ?? ""}`);
+      }
 
       const audioBlob = await res.blob();
       const audioUrl = URL.createObjectURL(audioBlob);

@@ -39,15 +39,23 @@ Keep it conversational and encouraging.`;
       }
     );
 
-    const data = await response.json();
-    
-    if (data.error) {
-      throw new Error(data.error.message);
+    if (!response.ok) {
+      const errText = await response.text().catch(() => null);
+      console.error("Gemini API response error:", response.status, errText);
+      return NextResponse.json({ error: "Upstream Gemini error", details: errText }, { status: response.status });
     }
-    
+
+    const data = await response.json();
+
+    if (data.error) {
+      console.error("Gemini returned error object:", data.error);
+      throw new Error(data.error.message || "Gemini error");
+    }
+
     const feedback = data.candidates?.[0]?.content?.parts?.[0]?.text || "Good effort! Keep practicing.";
 
-    return NextResponse.json({ feedback });
+    // For now, the route returns feedback and an explicit situationComplete flag (false by default).
+    return NextResponse.json({ feedback, situationComplete: false });
   } catch (error: any) {
     console.error("Feedback error:", error.message);
     return NextResponse.json(
