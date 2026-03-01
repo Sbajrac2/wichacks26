@@ -233,13 +233,13 @@ function SessionContent() {
                   onClick={() => setInputMode("voice")}
                   className={`px-4 py-2 rounded-lg text-sm ${inputMode === "voice" ? "bg-indigo-500" : "bg-slate-800"}`}
                 >
-                  🎤 Voice
+                   Voice
                 </button>
                 <button
                   onClick={() => setInputMode("text")}
                   className={`px-4 py-2 rounded-lg text-sm ${inputMode === "text" ? "bg-indigo-500" : "bg-slate-800"}`}
                 >
-                  ⌨️ Type
+                   Type
                 </button>
               </div>
 
@@ -274,7 +274,7 @@ function SessionContent() {
                       disabled={isAISpeaking}
                       className="rounded-full bg-red-500 p-8 hover:bg-red-400 disabled:opacity-50"
                     >
-                      🎤 Start Speaking
+                       Start Speaking
                     </button>
                   ) : (
                     <button
