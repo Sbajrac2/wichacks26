@@ -1,4 +1,4 @@
-import LessonChatbot from "@/app/components/LessonChatbot";
+import LessonChatbot from "../../components/LessonChatbot";
 
 const lessonContent: Record<string, { title: string; points: string[]; tips: string[] }> = {
   "gender-bias": {
