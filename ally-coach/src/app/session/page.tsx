@@ -311,7 +311,7 @@ function SessionContent() {
                       onClick={stopRecording}
                       className="rounded-full bg-green-500 p-8 hover:bg-green-400 animate-pulse"
                     >
-                      ✓ Done Speaking
+                       Done Speaking
                     </button>
                   )}
                 </>
