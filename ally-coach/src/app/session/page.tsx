@@ -22,46 +22,28 @@ function SessionContent() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const finalTranscriptRef = useRef("");
 
-  // Define all scenario prompts
-  const scenarioPrompts: Record<string, string[]> = {
-    "gender-bias": [
-      "You're in a team meeting. A female colleague just shared an idea, but a male coworker interrupts and takes credit for it. What do you say?",
-      "A female student was overlooked for a scholarship in favor of a male student with similar achievements. How do you respond?",
-      "During a presentation, a male colleague repeatedly talks over a female colleague. How do you address it?",
-      "You notice female teammates being left out of important emails and meetings. What action do you take?",
-      "A manager praises a male colleague for work your female colleague did. How do you respond?"
-    ],
-    "racial-microaggressions": [
-      "During lunch, a coworker makes a 'joke' about someone's ethnicity. Everyone laughs uncomfortably. How do you respond?",
-      "A teammate keeps using stereotypes to describe colleagues of a certain race. What do you do?",
-      "Someone on your team mispronounces a colleague's ethnic name repeatedly. How do you react?",
-      "During a meeting, a person assumes a colleague of color is an intern. How do you address it?",
-      "A coworker comments that a certain ethnic group 'naturally' has certain skills. What do you say?"
-    ],
-    "misgendering": [
-      "In a meeting, someone repeatedly uses the wrong pronouns for your colleague. What do you do?",
-      "A new coworker insists on using an outdated name for someone who recently transitioned. How do you respond?",
-      "Someone makes a joke about someone's gender identity. How do you address it?",
-      "During an introduction, a colleague is misgendered publicly. How do you handle it?",
-      "Your manager consistently misgenders a team member in emails. What action do you take?"
-    ]
+  useEffect(() => {
+    setSituationIndex(getNextSituationIndex(scenario));
+  }, [scenario]);
+
+  const scenarioPrompts: Record<string, string> = {
+    "gender-bias": "You're in a team meeting. A female colleague just shared an idea, but a male coworker interrupts and takes credit for it. What do you say?",
+    "racial-microaggressions": "During lunch, a coworker makes a 'joke' about someone's ethnicity. Everyone laughs uncomfortably. How do you respond?",
+    "misgendering": "In a meeting, someone repeatedly uses the wrong pronouns for your colleague. What do you do?"
   };
 
-  // Start session
   async function startSession() {
-    const idx = getNextSituationIndex(scenario); // get correct initial index
-    setSituationIndex(idx);
     setSessionStarted(true);
-
-    const prompt = scenarioPrompts[scenario][idx];
-    const initialConversation = [{ role: "ai", text: prompt }];
-    setConversation(initialConversation);
-
+    const prompt = scenarioPrompts[scenario];
+    setConversation([{ role: "ai", text: prompt }]);
     await speakText(prompt);
   }
 
-  // Function to speak text using ElevenLabs API
   async function speakText(text: string) {
+    if (!text || !text.trim()) {
+      console.warn("speakText called with empty text, skipping TTS");
+      return;
+    }
     setIsAISpeaking(true);
     try {
       const res = await fetch("/api/elevenlabs", {
@@ -70,24 +52,22 @@ function SessionContent() {
         body: JSON.stringify({ text })
       });
 
-      if (!res.ok) throw new Error("Speech failed");
+      if (!res.ok) {
+        const errText = await res.text().catch(() => null);
+        console.error("TTS endpoint returned non-OK:", res.status, errText);
+        throw new Error(`Speech failed: ${res.status} ${errText ?? ""}`);
+      }
 
       const audioBlob = await res.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
-
+      
       audio.onended = () => {
         setIsAISpeaking(false);
         audioRef.current = null;
       };
-
-      try {
-        await audio.play();
-      } catch (err) {
-        console.warn("Autoplay prevented:", err);
-        setIsAISpeaking(false);
-      }
+      await audio.play();
     } catch (error) {
       console.error("Speech error:", error);
       setIsAISpeaking(false);
@@ -107,24 +87,26 @@ function SessionContent() {
     finalTranscriptRef.current = "";
   }
 
-  // Start voice recording
   async function startRecording() {
     try {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      
       if (!SpeechRecognition) {
         alert("Speech recognition not supported. Use Chrome.");
         return;
       }
-
+      
       const recognition = new SpeechRecognition();
       recognitionRef.current = recognition;
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = 'en-US';
+      
       finalTranscriptRef.current = "";
-
+      
       recognition.onresult = (event: any) => {
         let interimTranscript = '';
+        
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcriptPiece = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
@@ -133,16 +115,23 @@ function SessionContent() {
             interimTranscript += transcriptPiece;
           }
         }
+        
         setTranscript(finalTranscriptRef.current + interimTranscript);
       };
-
+      
       recognition.onerror = (event: any) => {
-        if (event.error === 'not-allowed') alert("Microphone permission denied.");
-        else if (event.error === 'audio-capture') alert("No microphone found.");
+        if (event.error === 'not-allowed') {
+          alert("Microphone permission denied.");
+        } else if (event.error === 'audio-capture') {
+          alert("No microphone found.");
+        }
         setIsRecording(false);
       };
-
-      recognition.onend = () => { /* do nothing */ };
+      
+      recognition.onend = () => {
+        // Don't auto-restart
+      };
+      
       recognition.start();
       setIsRecording(true);
     } catch (error) {
@@ -151,19 +140,18 @@ function SessionContent() {
     }
   }
 
-  // Stop recording and send input to AI
   function stopRecording() {
     if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch {}
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        console.log("Recognition already stopped");
+      }
       setIsRecording(false);
-  
+      
       if (transcript && transcript.trim()) {
-        // Use functional update to guarantee fresh state
-        setConversation(prev => {
-          const updated = [...prev, { role: "user", text: transcript }];
-          getAIFeedback(transcript, updated); // pass the latest
-          return updated;
-        });
+        setConversation(prev => [...prev, { role: "user", text: transcript }]);
+        getAIFeedback(transcript);
         setTranscript("");
         finalTranscriptRef.current = "";
       } else {
@@ -171,19 +159,16 @@ function SessionContent() {
       }
     }
   }
-  
+
   function submitTypedInput() {
     if (typedInput.trim()) {
-      setConversation(prev => {
-        const updated = [...prev, { role: "user", text: typedInput }];
-        getAIFeedback(typedInput, updated);
-        return updated;
-      });
+      setConversation(prev => [...prev, { role: "user", text: typedInput }]);
+      getAIFeedback(typedInput);
       setTypedInput("");
     }
   }
-  
-  async function getAIFeedback(userResponse: string, conversationHistory: any) {
+
+  async function getAIFeedback(userResponse: string) {
     try {
       const res = await fetch("/api/feedback", {
         method: "POST",
@@ -191,76 +176,48 @@ function SessionContent() {
         body: JSON.stringify({ 
           scenario, 
           userResponse,
-          conversationHistory,
+          conversationHistory: conversation,
           situationIndex
         })
       });
-  
-      if (!res.ok) {
-        if (res.status === 429) {
-          console.warn("Too many requests to API. Please wait a moment.");
-          setConversation(prev => [
-            ...conversationHistory,
-            { role: "ai", text: "⚠️ AI Coach is temporarily unavailable. Please wait a moment and try again." }
-          ]);
-          return;
-        }
-        throw new Error(`API error: ${res.status}`);
-      }
-  
+
       const data = await res.json();
-      if (!data.feedback) {
-        console.warn("No feedback returned from API");
-        setConversation(prev => [
-          ...conversationHistory,
-          { role: "ai", text: "⚠️ AI Coach did not respond. Please try again." }
-        ]);
-        return;
-      }
-  
       const feedback = data.feedback;
-      setConversation(prev => [...conversationHistory, { role: "ai", text: feedback }]);
+      
+      setConversation(prev => [...prev, { role: "ai", text: feedback }]);
       await speakText(feedback);
-  
+      
       if (data.situationComplete) {
         markSituationComplete(scenario);
         setTimeout(() => router.push('/badges'), 2000);
       }
     } catch (error) {
       console.error("Feedback error:", error);
-      setConversation(prev => [
-        ...conversationHistory,
-        { role: "ai", text: "⚠️ AI Coach failed to respond due to an error." }
-      ]);
     }
   }
 
-  // End scene and move to next situation
+  // Called by the user to end the current situation and advance to the next one.
   async function endScene() {
     try {
       markSituationComplete(scenario);
+      const nextIdx = getNextSituationIndex(scenario);
+      setSituationIndex(nextIdx);
 
-      const nextIdx = situationIndex + 1;
+      const nextPrompt = scenarioPrompts[scenario] || "";
+      const aiText = `Next situation ${nextIdx + 1}: ${nextPrompt}`;
+      setConversation([{ role: "ai", text: aiText }]);
+      await speakText(aiText);
 
-      if (nextIdx < scenarioPrompts[scenario].length) {
-        setSituationIndex(nextIdx);
-        const nextPrompt = scenarioPrompts[scenario][nextIdx];
-        const aiText = `Next situation ${nextIdx + 1}: ${nextPrompt}`;
-        setConversation([{ role: "ai", text: aiText }]);
-        await speakText(aiText);
-      } else {
-        // Completed all 5 scenes
-        const prog = getScenarioProgress(scenario);
-        if (prog && prog.completed) {
-          setTimeout(() => router.push('/badges'), 1500);
-        }
+      const prog = getScenarioProgress(scenario);
+      if (prog && prog.completed) {
+        // If we've completed all situations for this scenario, go to badges.
+        setTimeout(() => router.push('/badges'), 1500);
       }
     } catch (err) {
       console.error("End scene error:", err);
     }
   }
 
-  // UI rendering
   return (
     <main className="min-h-screen bg-slate-950 text-white px-8 py-12">
       <div className="max-w-4xl mx-auto">
@@ -309,7 +266,6 @@ function SessionContent() {
                   End Scene →
                 </button>
               </div>
-
               <div className="flex gap-2 mb-2">
                 <button
                   onClick={() => setInputMode("voice")}
@@ -333,7 +289,7 @@ function SessionContent() {
                   Skip →
                 </button>
               )}
-
+              
               {inputMode === "voice" ? (
                 <>
                   {transcript && (
@@ -349,7 +305,7 @@ function SessionContent() {
                       </button>
                     </div>
                   )}
-
+                  
                   {!isRecording ? (
                     <button
                       onClick={startRecording}
