@@ -9,12 +9,23 @@ export async function POST(req: Request) {
       throw new Error("Missing required fields");
     }
 
-    const prompt = `You are an empathetic allyship coach helping someone learn about ${scenario.replace(/-/g, " ")}.
+   const prompt = `You are an allyship coach helping someone learn about ${scenario.replace(/-/g, " ")}.
 
-User question: "${input}"
-
-Provide a clear, practical answer. Use **bold** for key points and line breaks for readability. Keep it warm and actionable.`;
-
+    User question: "${input}"
+    
+    Respond in a short and precise way.
+    
+    Rules:
+    - Use bullet points.
+    - Each bullet must start on a new line.
+    - Keep sentences concise.
+    - No bold, italics, or special formatting.
+    - No jargon.
+    - No repetition.
+    - No long paragraphs.
+    - Only include important, actionable information.
+    - Maximum 5 bullet points.
+    `;
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
