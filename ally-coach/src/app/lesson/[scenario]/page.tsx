@@ -45,8 +45,8 @@ const lessonContent: Record<string, { title: string; points: string[]; tips: str
   }
 };
 
-export default function LessonPage({ params }: { params: { scenario: string } }) {
-  const { scenario } = params;
+export default async function LessonPage({ params }: { params: Promise<{ scenario: string }> }) {
+  const { scenario } = await params;
   const content = lessonContent[scenario] || lessonContent["gender-bias"];
 
   return (
