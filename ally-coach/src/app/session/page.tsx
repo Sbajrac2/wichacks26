@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { markSituationComplete, getNextSituationIndex } from "../lib/progress";
+import { markSituationComplete, getNextSituationIndex, getScenarioProgress } from "../lib/progress";
 
 function SessionContent() {
   const searchParams = useSearchParams();
@@ -188,6 +188,28 @@ function SessionContent() {
     }
   }
 
+  // Called by the user to end the current situation and advance to the next one.
+  async function endScene() {
+    try {
+      markSituationComplete(scenario);
+      const nextIdx = getNextSituationIndex(scenario);
+      setSituationIndex(nextIdx);
+
+      const nextPrompt = scenarioPrompts[scenario] || "";
+      const aiText = `Next situation ${nextIdx + 1}: ${nextPrompt}`;
+      setConversation([{ role: "ai", text: aiText }]);
+      await speakText(aiText);
+
+      const prog = getScenarioProgress(scenario);
+      if (prog && prog.completed) {
+        // If we've completed all situations for this scenario, go to badges.
+        setTimeout(() => router.push('/badges'), 1500);
+      }
+    } catch (err) {
+      console.error("End scene error:", err);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-white px-8 py-12">
       <div className="max-w-4xl mx-auto">
@@ -228,6 +250,14 @@ function SessionContent() {
             </div>
 
             <div className="mt-6 flex flex-col items-center gap-4">
+              <div className="w-full max-w-2xl flex justify-end">
+                <button
+                  onClick={endScene}
+                  className="text-xs text-slate-300 hover:text-white bg-slate-800 px-3 py-2 rounded-lg"
+                >
+                  End Scene →
+                </button>
+              </div>
               <div className="flex gap-2 mb-2">
                 <button
                   onClick={() => setInputMode("voice")}

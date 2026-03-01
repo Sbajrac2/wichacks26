@@ -34,9 +34,12 @@ export async function POST(req: Request) {
     );
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error("ElevenLabs API response:", error);
-      throw new Error("ElevenLabs API error");
+      const errorText = await response.text().catch(() => null);
+      console.error("ElevenLabs API response:", response.status, errorText);
+      return NextResponse.json(
+        { error: "ElevenLabs API error", details: errorText },
+        { status: response.status }
+      );
     }
 
     const audioBuffer = await response.arrayBuffer();
@@ -47,9 +50,9 @@ export async function POST(req: Request) {
       }
     });
   } catch (error: any) {
-    console.error("ElevenLabs error:", error.message);
+    console.error("ElevenLabs error:", error?.message ?? error);
     return NextResponse.json(
-      { error: "Speech generation failed" },
+      { error: error?.message ?? "Speech generation failed" },
       { status: 500 }
     );
   }
