@@ -51,11 +51,12 @@ function SessionContent() {
 };
 
   async function startSession() {
-    setSessionStarted(true);
-    const prompt = scenarioPrompts[scenario];
-    setConversation([{ role: "ai", text: prompt }]);
-    await speakText(prompt);
-  }
+  setSessionStarted(true);
+  const prompt = scenarioPrompts[scenario][situationIndex];
+  setConversation([{ role: "ai", text: prompt }]);
+  await speakText(prompt);
+}
+
 
   async function speakText(text: string) {
     setIsAISpeaking(true);
@@ -207,26 +208,31 @@ function SessionContent() {
   }
 
   // Called by the user to end the current situation and advance to the next one.
-  async function endScene() {
+   async function endScene() {
     try {
       markSituationComplete(scenario);
-      const nextIdx = getNextSituationIndex(scenario);
-      setSituationIndex(nextIdx);
-
-      const nextPrompt = scenarioPrompts[scenario] || "";
-      const aiText = `Next situation ${nextIdx + 1}: ${nextPrompt}`;
-      setConversation([{ role: "ai", text: aiText }]);
-      await speakText(aiText);
-
-      const prog = getScenarioProgress(scenario);
-      if (prog && prog.completed) {
-        // If we've completed all situations for this scenario, go to badges.
-        setTimeout(() => router.push('/badges'), 1500);
+      
+      const nextIdx = situationIndex + 1;
+      
+      if (nextIdx < scenarioPrompts[scenario].length) {
+        setSituationIndex(nextIdx);
+  
+        const nextPrompt = scenarioPrompts[scenario][nextIdx];
+        const aiText = `Next situation ${nextIdx + 1}: ${nextPrompt}`;
+        setConversation([{ role: "ai", text: aiText }]);
+        await speakText(aiText);
+      } else {
+        // Completed all 5 scenes for this scenario
+        const prog = getScenarioProgress(scenario);
+        if (prog && prog.completed) {
+          setTimeout(() => router.push('/badges'), 1500);
+        }
       }
     } catch (err) {
       console.error("End scene error:", err);
     }
   }
+
 
   return (
     <main className="min-h-screen bg-slate-950 text-white px-8 py-12">
