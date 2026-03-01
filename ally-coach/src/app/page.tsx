@@ -170,6 +170,9 @@ export default function Home() {
         <footer className="mt-14 text-xs text-slate-500">
           Don't let the right words escape you. This app helps you prepare, speak up, and support those who need it.
         </footer>
+        <footer className="mt-10 text-xs text-slate-500">
+          Disclaimer: This project was developed during a hackathon and is a prototype intended for demonstration and educational purposes only. It may contain bugs, incomplete features, or inaccuracies and should not be relied upon for production use.
+        </footer>
       </div>
     </main>
   );
