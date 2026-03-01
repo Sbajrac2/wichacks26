@@ -26,11 +26,29 @@ function SessionContent() {
     setSituationIndex(getNextSituationIndex(scenario));
   }, [scenario]);
 
-  const scenarioPrompts: Record<string, string> = {
-    "gender-bias": "You're in a team meeting. A female colleague just shared an idea, but a male coworker interrupts and takes credit for it. What do you say?",
-    "racial-microaggressions": "During lunch, a coworker makes a 'joke' about someone's ethnicity. Everyone laughs uncomfortably. How do you respond?",
-    "misgendering": "In a meeting, someone repeatedly uses the wrong pronouns for your colleague. What do you do?"
-  };
+  const scenarioPrompts: Record<string, string[]> = {
+  "gender-bias": [
+    "You're in a team meeting. A female colleague just shared an idea, but a male coworker interrupts and takes credit for it. What do you say?",
+    "A female student was overlooked for a scholarship in favor of a male student with similar achievements. How do you respond?",
+    "During a presentation, a male colleague repeatedly talks over a female colleague. How do you address it?",
+    "You notice female teammates being left out of important emails and meetings. What action do you take?",
+    "A manager praises a male colleague for work your female colleague did. How do you respond?"
+  ],
+  "racial-microaggressions": [
+    "During lunch, a coworker makes a 'joke' about someone's ethnicity. Everyone laughs uncomfortably. How do you respond?",
+    "A teammate keeps using stereotypes to describe colleagues of a certain race. What do you do?",
+    "Someone on your team mispronounces a colleague's ethnic name repeatedly. How do you react?",
+    "During a meeting, a person assumes a colleague of color is an intern. How do you address it?",
+    "A coworker comments that a certain ethnic group 'naturally' has certain skills. What do you say?"
+  ],
+  "misgendering": [
+    "In a meeting, someone repeatedly uses the wrong pronouns for your colleague. What do you do?",
+    "A new coworker insists on using an outdated name for someone who recently transitioned. How do you respond?",
+    "Someone makes a joke about someone's gender identity. How do you address it?",
+    "During an introduction, a colleague is misgendered publicly. How do you handle it?",
+    "Your manager consistently misgenders a team member in emails. What action do you take?"
+  ]
+};
 
   async function startSession() {
     setSessionStarted(true);
