@@ -5,21 +5,10 @@ AllyCo is an AI-powered accessibility coaching application.
 
 ---
 
-# Project README
+# Project README to run locally
 
 ## Cloning the Repo
-(URL removed for safety check)
-# AllyCo
-AllyCo is an AI-powered accessibility coaching application.
-
-**Note:** All commands must be run from within the 'ally-coach' subdirectory to prevent path confusion.
-
----
-
-# Project README
-
-## Cloning the Repo
-(Refer to repository URL)
+git clone https://github.com/Sbajrac2/wichacks26.git
 
 ## Installing Dependencies
 npm install
@@ -34,14 +23,4 @@ Create a .env.local file with:
 npm run dev
 
 ## Project Documentation
-(Refer to documentation link)
-## Installing Dependencies
-npm install
-
-## Environment Setup
-- GEMINI_API_KEY
-- ELEVENLABS_API_KEY
-- OPENAI_API_KEY
-
-## Running the App
-npm run dev
+[Documentation](https://docs.google.com/document/d/1Qay25h6OMFSnuaIRSr8hSDeE7G-tYyjCTBDPzvi4EtA/edit?tab=t.0)
